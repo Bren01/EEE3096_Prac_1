@@ -30,7 +30,7 @@ int HH,MM,SS;
 
 void CleanUp(int sig){
 	printf("Cleaning up\n");
-	digitalWrite(LED, LOW)
+	digitalWrite(LED, LOW);
 	pinMode (LED,INPUT) ;
 			//Set LED to low then input mode
 			//Logic here
