@@ -208,11 +208,12 @@ void hourInc(void){
 			//Increase hours by 1, ensuring not to overflow
 			//Write hours back to the RTC
 		
-		int value = wiringPiI2CReadReg8(RTC, HOUR_REGISTER);
+		int value = hexCompensation(wiringPiI2CReadReg8(RTC, HOUR_REGISTER));
 		value = value +1;
 		if(value == 24){
 			value = 0;
 		}
+		value = decCompensation(value);
 		wiringPiI2CWriteReg8(RTC, HOUR_REGISTER, value); 
 	}
 	lastInterruptTime = interruptTime;
@@ -232,12 +233,13 @@ void minInc(void){
 			//Fetch RTC Time
 			//Increase minutes by 1, ensuring not to overflow
 			//Write minutes back to the RTC
-		int value = wiringPiI2CReadReg8(RTC, MIN_REGISTER);
+		int value = hexCompensation(wiringPiI2CReadReg8(RTC, MIN_REGISTER));
 		value = value +1;
 		if(value == 60){
 			value = 0;
 			hourInc();
 		}
+		value = decCompensation(value);
 		wiringPiI2CWriteReg8(RTC, MIN_REGISTER, value);
 	}
 	lastInterruptTime = interruptTime;
