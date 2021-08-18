@@ -106,7 +106,7 @@ int main(void){
 			//Toggle Seconds LED
 			//Write your logic here
 		
-		if(digitalRead(LED) == 0){
+		if(digitalRead(LED) == LOW){  // change LOW to 0 if not work
 			digitalWrite(LED, HIGH);
 		}
 		else{
