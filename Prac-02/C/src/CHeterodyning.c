@@ -3,7 +3,7 @@
 extern __fp16 data [SAMPLE_COUNT];
 extern __fp16 carrier[SAMPLE_COUNT];
 
-float result [SAMPLE_COUNT];
+__fp16 result [SAMPLE_COUNT];
 
 int main(int argc, char**argv){
     printf("Running Unthreaded Test\n");
