@@ -12,10 +12,15 @@ LED_value = [11, 13, 15]
 LED_accuracy = 32
 btn_submit = 16
 btn_increase = 18
-buzzer = None
+buzzer = 33
 eeprom = ES2EEPROMUtils.ES2EEPROM()
 
+lastInterruptTime = 0
+currentGuess = 0
 
+led_duty = 0
+value = None
+ 
 # Print the game banner
 def welcome():
     os.system('clear')
@@ -44,6 +49,7 @@ def menu():
         print("Starting a new round!")
         print("Use the buttons on the Pi to make and submit your guess!")
         print("Press and hold the guess button to cancel your game")
+        global value
         value = generate_number()
         while not end_of_game:
             pass
@@ -64,9 +70,27 @@ def display_scores(count, raw_data):
 # Setup Pins
 def setup():
     # Setup board mode
+    GPIO.setmode(GPIO.BOARD)
     # Setup regular GPIO
+    for x in LED_value:
+        GPIO.setup(x,GPIO.OUT)
+        GPIO.output(x,0)
+
+    GPIO.setup(btn_submit,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(btn_increase,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+    
     # Setup PWM channels
+    GPIO.setup(LED_accuracy,GPIO.OUT)
+    global led_pwm
+    led_pwm = GPIO.PWM(LED_accuracy,50)
+    #buzzer_pwm = GPIO.PWM(buzzer,1000)
+
+    led_pwm.start(0)
+    #buzzer_pwm.start(0)
     # Setup debouncing and callbacks
+    GPIO.add_event_detect(btn_increase,GPIO.RISING,callback=btn_increase_pressed,bouncetime=300)
+    GPIO.add_event_detect(btn_submit,GPIO.RISING,callback=btn_guess_pressed,bouncetime=300)
+
     pass
 
 
@@ -102,15 +126,70 @@ def btn_increase_pressed(channel):
     # Increase the value shown on the LEDs
     # You can choose to have a global variable store the user's current guess, 
     # or just pull the value off the LEDs when a user makes a guess
+
+    print('test1')
+    #currentGuess=0
+    global currentGuess
+    currentGuess=currentGuess+1
+    if currentGuess==0:
+        GPIO.output(LED_value[0],0)
+        GPIO.output(LED_value[1],0)
+        GPIO.output(LED_value[2],0)
+
+    if currentGuess==1:
+        GPIO.output(LED_value[0],1)
+        GPIO.output(LED_value[1],0)
+        GPIO.output(LED_value[2],0)
+     
+    if currentGuess==2:
+        GPIO.output(LED_value[0],0)
+        GPIO.output(LED_value[1],1)
+        GPIO.output(LED_value[2],0)
+
+    if currentGuess==3:
+        GPIO.output(LED_value[0],1)
+        GPIO.output(LED_value[1],1)
+        GPIO.output(LED_value[2],0)
+    
+    if currentGuess==4:
+        GPIO.output(LED_value[0],0)
+        GPIO.output(LED_value[1],0)
+        GPIO.output(LED_value[2],1)
+
+    if currentGuess==5:
+        GPIO.output(LED_value[0],1)
+        GPIO.output(LED_value[1],0)
+        GPIO.output(LED_value[2],1)
+     
+    if currentGuess==6:
+        GPIO.output(LED_value[0],0)
+        GPIO.output(LED_value[1],1)
+        GPIO.output(LED_value[2],1)
+
+    if currentGuess==7:
+        GPIO.output(LED_value[0],1)
+        GPIO.output(LED_value[1],1)
+        GPIO.output(LED_value[2],1)
+    
+    if currentGuess>=8:
+        currentGuess=0
+        GPIO.output(LED_value[0],0)
+        GPIO.output(LED_value[1],0)
+        GPIO.output(LED_value[2],0)
+       
     pass
 
 
 # Guess button
 def btn_guess_pressed(channel):
     # If they've pressed and held the button, clear up the GPIO and take them back to the menu screen
+    # if held clear and go to menu
     # Compare the actual value with the user value displayed on the LEDs
+    print('test2')
     # Change the PWM LED
+    accuracy_leds()
     # if it's close enough, adjust the buzzer
+    trigger_buzzer()
     # if it's an exact guess:
     # - Disable LEDs and Buzzer
     # - tell the user and prompt them for a name
@@ -127,6 +206,19 @@ def accuracy_leds():
     # - The % brightness should be directly proportional to the % "closeness"
     # - For example if the answer is 6 and a user guesses 4, the brightness should be at 4/6*100 = 66%
     # - If they guessed 7, the brightness would be at ((8-7)/(8-6)*100 = 50%
+    #print('test3')
+    global value
+    if currentGuess<value:
+        led_duty = currentGuess/value*100
+        print(led_duty)
+    if currentGuess>value:
+        led_duty = (8-currentGuess)/(8-value)*100
+        print(led_duty)
+    if currentGuess==value:
+        led_duty=100
+        print(led_duty)
+    led_pwm.ChangeDutyCycle(led_duty)
+    
     pass
 
 # Sound Buzzer
